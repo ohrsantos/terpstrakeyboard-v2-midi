@@ -988,7 +988,7 @@ function ActiveHex(coords) {
 function sendMidiNoteOn(cents) {
     
         pitchBend = ((cents - g_equivMultiple * 1200 )  - 100 * g_midiNoteIndex) * 0.005 ;
-        g_noteMidiOctave = g_equivMultiple + 3;
+        g_noteMidiOctave = g_equivMultiple + 4;
         //console.log(cents);
         //console.log(pitchBend);
         //console.log(g_midiNoteIndex);
