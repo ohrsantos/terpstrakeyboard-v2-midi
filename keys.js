@@ -1,4 +1,4 @@
-var g_midiNoteIndex, g_equivMultiple, g_noteMidiOctave, g_midiEnabled = false;
+var g_midiNoteIndex, g_equivMultiple, g_noteMidiOctave;
 
 var pitchName = [ 'C', 'C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
@@ -8,7 +8,6 @@ WebMidi.enable(function (err) {
     } else {
         console.log("WebMidi enabled!");
         console.log(WebMidi.inputs, WebMidi.outputs);
-        g_midiEnabled = true;
     }
 });
 
@@ -987,24 +986,23 @@ function ActiveHex(coords) {
 
 function sendMidiNoteOn(cents) {
     
+     if (WebMidi.enabled) { 
         pitchBend = ((cents - g_equivMultiple * 1200 )  - 100 * g_midiNoteIndex) * 0.005 ;
         g_noteMidiOctave = g_equivMultiple + 4;
-        //console.log(cents);
-        //console.log(pitchBend);
-        //console.log(g_midiNoteIndex);
-        //console.log(g_noteMidiOctave);
         WebMidi.outputs[0].playNote(`${pitchName[g_midiNoteIndex]}${g_noteMidiOctave}`,
                                     g_midiNoteIndex + 1, { velocity: 1}).sendPitchBend(pitchBend, g_midiNoteIndex + 1) ;
+     }
 }
 
 function sendMidiNoteOff() {
-        //console.log(pitchName[g_midiNoteIndex]);
+     if (WebMidi.enabled) {    
         WebMidi.outputs[0].stopNote(`${pitchName[g_midiNoteIndex]}${g_noteMidiOctave}`, g_midiNoteIndex + 1, { velocity: 1});
+     }
 }
 
 ActiveHex.prototype.noteOn = function(cents) {
     console.log('ActiveHex.prototype.noteOn');
-    if (g_midiEnabled) sendMidiNoteOn(cents);
+    sendMidiNoteOn(cents);
     var freq = settings.fundamental * Math.pow(2, cents / 1200);
     var source = settings.audioContext.createBufferSource(); // creates a sound source
     // Choose sample
@@ -1044,7 +1042,7 @@ ActiveHex.prototype.noteOn = function(cents) {
 
 ActiveHex.prototype.noteOff = function() {
   console.log('ActiveHex.prototype.noteOff');
-  if (g_midiEnabled) sendMidiNoteOff();
+  sendMidiNoteOff();
   if (settings.sustain) {
     settings.sustainedNotes.push(this);
   } else {
