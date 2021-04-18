@@ -309,8 +309,8 @@ function goKeyboard() {
   
     settings.hexHeight = settings.hexSize * 2;
     settings.hexVert = settings.hexHeight * 3 / 4;
-    settings.hexWidth = Math.sqrt(3) / 2 * settings.hexHeight;
-    //settings.hexWidth = 1 / 2 * settings.hexHeight;
+    //settings.hexWidth = Math.sqrt(3) / 2 * settings.hexHeight;
+    settings.hexWidth = 1 / 2 * settings.hexHeight;
   
     settings.no_labels = document.getElementById('no_labels').checked;
     settings.spectrum_colors = document.getElementById('spectrum_colors').checked;
@@ -705,11 +705,30 @@ function drawHex(p, c) { /* Point, color */
       //ctx.lineTo (Xcenter + size * Math.cos(i * 2 * Math.PI / numberOfSides), Ycenter + size * Math.sin(i * 2 * Math.PI / numberOfSides));
     //}
 
-    for (var i = 0; i < 6; i++) {
-      var angle = 2 * Math.PI / 6 * (i + 0.5);
-      x[i] = hexCenter.x + settings.hexSize * Math.cos(angle);
-      y[i] = hexCenter.y + settings.hexSize * Math.sin(angle);
-    }
+    //for (var i = 0; i < 6; i++) {
+      //var angle = 2 * Math.PI / 6 * (i + 0.5);
+      //x[i] = hexCenter.x + settings.hexSize * Math.cos(angle);
+      //y[i] = hexCenter.y + settings.hexSize * Math.sin(angle);
+    //}
+
+      x[0] = hexCenter.x + settings.hexSize / 2;
+      y[0] = hexCenter.y + settings.hexSize * 0;
+
+      x[1] = hexCenter.x + settings.hexSize / 2;
+      y[1] = hexCenter.y + settings.hexSize / 1;
+
+      x[2] = hexCenter.x - settings.hexSize * 0;
+      y[2] = hexCenter.y + settings.hexSize / 1;
+
+      x[3] = hexCenter.x - settings.hexSize / 2;
+      y[3] = hexCenter.y + settings.hexSize * 0;
+
+      x[4] = hexCenter.x - settings.hexSize / 2;
+      y[4] = hexCenter.y - settings.hexSize / 1;
+
+      x[5] = hexCenter.x + settings.hexSize / 2;
+      y[5] = hexCenter.y - settings.hexSize / 1;
+
     /*
       x[0] = hexCenter.x + settings.hexSize
       y[0] = hexCenter.y + settings.hexSize * 1.3
@@ -750,11 +769,28 @@ function drawHex(p, c) { /* Point, color */
   
     var x2 = [];
     var y2 = [];
-    for (var i = 0; i < 6; i++) {
-      var angle = 2 * Math.PI / 6 * (i + 0.5);
-      x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
-      y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
-    }
+    //for (var i = 0; i < 6; i++) {
+      //var angle = 2 * Math.PI / 6 * (i + 0.5);
+      //x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
+      //y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
+    //}
+      x2[0] = hexCenter.x + (parseFloat(settings.hexSize) + 0.5 ) / 2;
+      y2[0] = hexCenter.y + (parseFloat(settings.hexSize) + 2 ) * 0;
+
+      x2[1] = hexCenter.x + (parseFloat(settings.hexSize) + 0.5 ) / 2;
+      y2[1] = hexCenter.y + (parseFloat(settings.hexSize) + 2 ) / 1;
+
+      x2[2] = hexCenter.x - (parseFloat(settings.hexSize) + 0.5 ) * 0;
+      y2[2] = hexCenter.y + (parseFloat(settings.hexSize) + 2 ) / 1;
+
+      x2[3] = hexCenter.x - (parseFloat(settings.hexSize) + 0.5 ) / 2;
+      y2[3] = hexCenter.y + (parseFloat(settings.hexSize) + 2 ) * 0;
+
+      x2[4] = hexCenter.x - (parseFloat(settings.hexSize) + 0.5 ) / 2;
+      y2[4] = hexCenter.y - (parseFloat(settings.hexSize) + 2 ) / 1;
+
+      x2[5] = hexCenter.x + (parseFloat(settings.hexSize) + 0.5 ) / 2;
+      y2[5] = hexCenter.y - (parseFloat(settings.hexSize) + 2 ) / 1;
   
     // Draw shadowed stroke outside clip to create pseudo-3d effect
   
