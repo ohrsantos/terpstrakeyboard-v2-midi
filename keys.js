@@ -1,4 +1,4 @@
-var g_midiNoteIndex, g_equivMultiple, g_noteMidiOctave;
+var g_midiNoteIndex, g_equivMultiple, g_noteMidiOctave, g_keyNoteOctave = 0;
 
 var pitchName = [ 'C', 'C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
@@ -11,10 +11,6 @@ WebMidi.enable(function (err) {
     }
 });
 
-function midiNote (reducedNote, midiOctave) {
-    var dd;
-}
-    
 var init_keyboard_onload = true;
 if(decodeURIComponent(window.location.search) == '')
 {
@@ -314,6 +310,7 @@ function goKeyboard() {
     settings.hexHeight = settings.hexSize * 2;
     settings.hexVert = settings.hexHeight * 3 / 4;
     settings.hexWidth = Math.sqrt(3) / 2 * settings.hexHeight;
+    //settings.hexWidth = 1 / 2 * settings.hexHeight;
   
     settings.no_labels = document.getElementById('no_labels').checked;
     settings.spectrum_colors = document.getElementById('spectrum_colors').checked;
@@ -379,6 +376,7 @@ function goKeyboard() {
         is_key_event_added = 1;
         settings.pressedKeys = [];
         settings.keyCodeToCoords = {
+         192  : new Point(-6, -2), // `
           49  : new Point(-5, -2), // 1
           50  : new Point(-4, -2), // 2
           51  : new Point(-3, -2), // 3
@@ -392,6 +390,7 @@ function goKeyboard() {
           189 : new Point(5, -2), // -
           187 : new Point(6, -2), // =
   
+           9  : new Point(-6, -1), // TAB
           81  : new Point(-5, -1), // Q
           87  : new Point(-4, -1), // W
           69  : new Point(-3, -1), // E
@@ -405,6 +404,7 @@ function goKeyboard() {
           219 : new Point(5, -1), // [
           221 : new Point(6, -1), // ]
   
+          255 : new Point(-6, 0), // CAPS LOCK
           65  : new Point(-5, 0), // A
           83  : new Point(-4, 0), // S
           68  : new Point(-3, 0), // D
@@ -416,7 +416,10 @@ function goKeyboard() {
           76  : new Point(3, 0), // L
           186 : new Point(4, 0), // ;
           222 : new Point(5, 0), // '
+          220 : new Point(6, 0), // '
   
+          16  : new Point(-7, 1), //  
+         226  : new Point(-6, 1), //  
           90  : new Point(-5, 1), // Z
           88  : new Point(-4, 1), // X
           67  : new Point(-3, 1), // C
@@ -427,6 +430,7 @@ function goKeyboard() {
           188 : new Point(2, 1), // ,
           190 : new Point(3, 1), // .
           191 : new Point(4, 1), // /
+          193 : new Point(5, 1), // \
       };
           window.addEventListener("keydown", onKeyDown, false);
           window.addEventListener("keyup",   onKeyUp,   false);
@@ -523,45 +527,58 @@ function goKeyboard() {
 }
 
 function onKeyDown(e) {
-  if (e.keyCode == 32) { // Spacebar
-      settings.sustain = true;
-  } else if ( !settings.isMouseDown                   &&
-              !settings.isTouchDown                   &&
-              (e.keyCode in settings.keyCodeToCoords) &&
-              settings.pressedKeys.indexOf(e.keyCode) == -1) {
-
-      settings.pressedKeys.push(e.keyCode);
-      var coords = settings.keyCodeToCoords[e.keyCode];
-      var hex    = new ActiveHex(coords);
-      settings.activeHexObjects.push(hex);
-      var cents  = hexCoordsToCents(coords);
-      drawHex(coords, centsToColor(cents, true));
-      hex.noteOn(cents);
-  }
+    e.preventDefault();
+    if (e.keyCode == 46) 
+        if (WebMidi.enabled) 
+            WebMidi.outputs[0].stopNote('all');
+    if (e.keyCode == 96) g_keyNoteOctave = 0;
+    if (e.keyCode == 97) g_keyNoteOctave -= 6;
+    if (e.keyCode == 98) g_keyNoteOctave += 6;
+    console.log(e.keyCode);
+    if (e.keyCode == 32) { // Spacebar
+        settings.sustain = true;
+    } else if ( !settings.isMouseDown                   &&
+                !settings.isTouchDown                   &&
+                (e.keyCode in settings.keyCodeToCoords) &&
+                settings.pressedKeys.indexOf(e.keyCode) == -1) {
+  
+        settings.pressedKeys.push(e.keyCode);
+        var coords = settings.keyCodeToCoords[e.keyCode];
+        coords.x += g_keyNoteOctave;
+        var hex    = new ActiveHex(coords);
+        settings.activeHexObjects.push(hex);
+        var cents  = hexCoordsToCents(coords);
+        drawHex(coords, centsToColor(cents, true));
+        hex.noteOn(cents);
+    }
 }
 
 function onKeyUp(e) {
   if (e.keyCode == 32) { // Spacebar
-      settings.sustain = false;
-      for (var note = 0; note < settings.sustainedNotes.length; note++) {
-          settings.sustainedNotes[note].noteOff();
-      }
-      settings.sustainedNotes = [];
-  } else if ( !settings.isMouseDown && !settings.isTouchDown &&
-              (e.keyCode in settings.keyCodeToCoords)) {
-      var keyIndex = settings.pressedKeys.indexOf(e.keyCode);
-      if (keyIndex != -1) {
-        settings.pressedKeys.splice(keyIndex, 1);
-        var coords = settings.keyCodeToCoords[e.keyCode];
-        drawHex(coords, centsToColor(hexCoordsToCents(coords), false));
-        var hexIndex = settings.activeHexObjects.findIndex(function(hex) {
-          return coords.equals(hex.coords);
-        });
-        if (hexIndex != -1) {
-          settings.activeHexObjects[hexIndex].noteOff();
-          settings.activeHexObjects.splice(hexIndex, 1);
+        settings.sustain = false;
+        for (var note = 0; note < settings.sustainedNotes.length; note++) {
+            settings.sustainedNotes[note].noteOff();
         }
-      }
+        settings.sustainedNotes = [];
+  } else if ( !settings.isMouseDown &&
+              !settings.isTouchDown &&
+              (e.keyCode in settings.keyCodeToCoords)) {
+
+             var keyIndex = settings.pressedKeys.indexOf(e.keyCode);
+             if (keyIndex != -1) {
+                   settings.pressedKeys.splice(keyIndex, 1);
+                   var coords = settings.keyCodeToCoords[e.keyCode];
+                   drawHex(coords, centsToColor(hexCoordsToCents(coords), false));
+
+                   var hexIndex = settings.activeHexObjects.findIndex(function(hex) {
+                       return coords.equals(hex.coords);
+                   });
+                  coords.x -= g_keyNoteOctave;
+                  if (hexIndex != -1) {
+                        settings.activeHexObjects[hexIndex].noteOff();
+                        settings.activeHexObjects.splice(hexIndex, 1);
+                  }
+             }
   }
 }
 
@@ -683,11 +700,29 @@ function drawHex(p, c) { /* Point, color */
   
     var x = [];
     var y = [];
+    //ctx.moveTo (Xcenter +  size * Math.cos(0), Ycenter +  size *  Math.sin(0));
+    //for (var i = 1; i <= numberOfSides;i += 1) {
+      //ctx.lineTo (Xcenter + size * Math.cos(i * 2 * Math.PI / numberOfSides), Ycenter + size * Math.sin(i * 2 * Math.PI / numberOfSides));
+    //}
+
     for (var i = 0; i < 6; i++) {
       var angle = 2 * Math.PI / 6 * (i + 0.5);
       x[i] = hexCenter.x + settings.hexSize * Math.cos(angle);
       y[i] = hexCenter.y + settings.hexSize * Math.sin(angle);
     }
+    /*
+      x[0] = hexCenter.x + settings.hexSize
+      y[0] = hexCenter.y + settings.hexSize * 1.3
+
+      x[1] = hexCenter.x - settings.hexSize
+      y[1] = hexCenter.y + settings.hexSize * 1.3
+
+      x[2] = hexCenter.x - settings.hexSize
+      y[2] = hexCenter.y - settings.hexSize * 1.3
+
+      x[3] = hexCenter.x + settings.hexSize
+      y[3] = hexCenter.y - settings.hexSize * 1.3
+      */
   
     // Draw filled hex
   
@@ -705,7 +740,7 @@ function drawHex(p, c) { /* Point, color */
     settings.context.save();
     settings.context.beginPath();
     settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 6; i++) {
+    for (var i = 1; i < 4; i++) {
       settings.context.lineTo(x[i], y[i]);
     }
     settings.context.closePath();
