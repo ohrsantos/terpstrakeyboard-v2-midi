@@ -33,7 +33,7 @@ document.getElementById("equivSteps").value = ("equivSteps" in getData) ? getDat
 document.getElementById("spectrum_colors").checked = ("spectrum_colors" in getData) ? JSON.parse(getData.spectrum_colors) : false;
 document.getElementById("fundamental_color").value = ("fundamental_color" in getData) ? getData.fundamental_color : '#55ff55';
 document.getElementById("no_labels").checked = ("no_labels" in getData) ? JSON.parse(getData.no_labels) : false;
-document.getElementById("c_keys").checked = ("c_keys" in getData) ? JSON.parse(getData.c_keys) : false;
+
 
 var global_pressed_interval;
 var current_text_color = "#000000";
@@ -53,7 +53,6 @@ if ("note_colors" in getData) {
 hideRevealNames();
 hideRevealColors();
 hideRevealEnum();
-hideRevealCircularKeys();
 
 function hideRevealNames() {
   if (document.getElementById("enum").checked) {
@@ -106,12 +105,6 @@ function hideRevealEnum() {
     }
   }
   changeURL();
-}
-function hideRevealCircularKeys() {
-    if(document.getElementById("c_keys").checked) 
-        drawMaster = drawCircule;
-    else
-        drawMaster = drawHex;
 }
 
 function Point(x, y) {
@@ -180,7 +173,6 @@ function changeURL() {
 }
 
 var settings = {};
-
 
 function parseScale() {
   settings.scale = [];
@@ -278,7 +270,7 @@ function back() {
   while (settings.activeHexObjects.length > 0) {
     var coords = settings.activeHexObjects[0].coords;
     settings.activeHexObjects[0].noteOff();
-    drawMaster(coords, centsToColor(hexCoordsToCents(coords), false));
+    drawHex(coords, centsToColor(hexCoordsToCents(coords), false));
     settings.activeHexObjects.splice(0, 1);
   }
   // UI change
@@ -314,6 +306,7 @@ function goKeyboard() {
   
     settings.canvas = document.getElementById('keyboard');
     settings.context = settings.canvas.getContext('2d');
+
   
     settings.hexHeight = settings.hexSize * 2;
     settings.hexVert = settings.hexHeight * 3 / 4;
@@ -525,7 +518,7 @@ function goKeyboard() {
       settings.canvas.removeEventListener("mousemove", mouseActive);
       if (settings.activeHexObjects.length > 0) {
         var coords = settings.activeHexObjects[0].coords;
-        drawMaster(coords, centsToColor(hexCoordsToCents(coords), false));
+        drawHex(coords, centsToColor(hexCoordsToCents(coords), false));
         settings.activeHexObjects[0].noteOff();
         settings.activeHexObjects.pop();
       }
@@ -536,16 +529,12 @@ function goKeyboard() {
 
 function onKeyDown(e) {
     e.preventDefault();
-    if (e.keyCode == 34) {
-        drawGrid();
-        drawMaster = drawCircule;
-    }
     if (e.keyCode == 46) 
         if (WebMidi.enabled) 
             WebMidi.outputs[0].stopNote('all');
-    if (e.keyCode == 96) g_keyNoteOctave = 0;
-    if (e.keyCode == 97) g_keyNoteOctave -= 6;
-    if (e.keyCode == 98) g_keyNoteOctave += 6;
+    if (e.keyCode == 40) g_keyNoteOctave = 0;
+    if (e.keyCode == 37) g_keyNoteOctave -= 6;
+    if (e.keyCode == 39) g_keyNoteOctave += 6;
     console.log(e.keyCode);
     if (e.keyCode == 32) { // Spacebar
         settings.sustain = true;
@@ -560,7 +549,7 @@ function onKeyDown(e) {
         var hex    = new ActiveHex(coords);
         settings.activeHexObjects.push(hex);
         var cents  = hexCoordsToCents(coords);
-        drawMaster(coords, centsToColor(cents, true));
+        drawHex(coords, centsToColor(cents, true));
         hex.noteOn(cents);
     }
 }
@@ -580,7 +569,7 @@ function onKeyUp(e) {
              if (keyIndex != -1) {
                    settings.pressedKeys.splice(keyIndex, 1);
                    var coords = settings.keyCodeToCoords[e.keyCode];
-                   drawMaster(coords, centsToColor(hexCoordsToCents(coords), false));
+                   drawHex(coords, centsToColor(hexCoordsToCents(coords), false));
 
                    var hexIndex = settings.activeHexObjects.findIndex(function(hex) {
                        return coords.equals(hex.coords);
@@ -602,17 +591,17 @@ function mouseActive(e) {
     if (settings.activeHexObjects.length == 0) {
       settings.activeHexObjects[0] = new ActiveHex(coords);
       var cents = hexCoordsToCents(coords);
-      drawMaster(coords, centsToColor(cents, true));
+      drawHex(coords, centsToColor(cents, true));
       settings.activeHexObjects[0].noteOn(cents);
     } else {
       if (!(coords.equals(settings.activeHexObjects[0].coords))) {
         settings.activeHexObjects[0].noteOff();
-        drawMaster(settings.activeHexObjects[0].coords,
+        drawHex(settings.activeHexObjects[0].coords,
             centsToColor(hexCoordsToCents(settings.activeHexObjects[0].coords, false)));
   
         settings.activeHexObjects[0] = new ActiveHex(coords);
         var cents = hexCoordsToCents(coords);
-        drawMaster(coords, centsToColor(cents, true));
+        drawHex(coords, centsToColor(cents, true));
         settings.activeHexObjects[0].noteOn(cents);
       }
     }
@@ -668,7 +657,7 @@ function handleTouch(e) {
         var cents = hexCoordsToCents(coords);
         newHex.noteOn(cents);
         var c = centsToColor(cents, true);
-        drawMaster(coords, c);
+        drawHex(coords, c);
         settings.activeHexObjects.push(newHex);
       }
     }
@@ -678,15 +667,16 @@ function handleTouch(e) {
         settings.activeHexObjects[i].noteOff();
         var coords = settings.activeHexObjects[i].coords;
         var c = centsToColor(hexCoordsToCents(coords), false);
-        drawMaster(coords, c);
+        drawHex(coords, c);
         settings.activeHexObjects.splice(i, 1);
       }
     }
 }
 
 function drawGrid() {
-  settings.context.fillStyle = '#222222';
-  settings.context.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
+    settings.context.fillStyle = '#222222';
+//settings.context.fillRect(0, 0, 500, 500);
+settings.context.fillRect(0, 0, settings.canvas.width, settings.canvas.height);
   var max = (settings.centerpoint.x > settings.centerpoint.y) ?
       settings.centerpoint.x / settings.hexSize :
       settings.centerpoint.y / settings.hexSize;
@@ -695,7 +685,8 @@ function drawGrid() {
     for (var ur = -max; ur < max; ur++) {
       var coords = new Point(r, ur);
       var c = centsToColor(hexCoordsToCents(coords), false);
-      drawMaster(coords, c);
+      //drawHex(coords, 'red');
+      drawHex(coords, c);
     }
   }
 }
@@ -706,8 +697,8 @@ function hexCoordsToScreen(hex) { /* Point */
   return (new Point(screenX, screenY));
 }
 
-var drawHex = function(p, c) { /* Point, color */
-    //console.log('drawMaster()'); 
+function drawHex(p, c) { /* Point, color */
+    //console.log('drawHex()'); 
     var hexCenter = hexCoordsToScreen(p);
   
     // Calculate hex vertices
@@ -741,132 +732,6 @@ var drawHex = function(p, c) { /* Point, color */
     // Draw filled hex
   
     settings.context.beginPath();
-    settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 6; i++) {
-      settings.context.lineTo(x[i], y[i]);
-    }
-    settings.context.closePath();
-    settings.context.fillStyle = c;
-    settings.context.fill();
-  
-    // Save context and create a hex shaped clip
-  
-    settings.context.save();
-    settings.context.beginPath();
-    settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 4; i++) {
-      settings.context.lineTo(x[i], y[i]);
-    }
-    settings.context.closePath();
-    settings.context.clip();
-  
-    // Calculate hex vertices outside clipped path
-  
-    var x2 = [];
-    var y2 = [];
-    for (var i = 0; i < 6; i++) {
-      var angle = 2 * Math.PI / 6 * (i + 0.5);
-      x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
-      y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
-    }
-  
-    // Draw shadowed stroke outside clip to create pseudo-3d effect
-  
-    settings.context.beginPath();
-    settings.context.moveTo(x2[0], y2[0]);
-    for (var i = 1; i < 6; i++) {
-      settings.context.lineTo(x2[i], y2[i]);
-    }
-    settings.context.closePath();
-    settings.context.strokeStyle = 'black';
-    settings.context.lineWidth = 5;
-    settings.context.shadowBlur = 15;
-    settings.context.shadowColor = 'black';
-    settings.context.shadowOffsetX = 0;
-    settings.context.shadowOffsetY = 0;
-    settings.context.stroke();
-    settings.context.restore();
-  
-    // Add a clean stroke around hex
-  
-    settings.context.beginPath();
-    settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 6; i++) {
-      settings.context.lineTo(x[i], y[i]);
-    }
-    settings.context.closePath();
-    settings.context.lineWidth = 2;
-    settings.context.lineJoin = 'round';
-    settings.context.strokeStyle = 'black';
-    settings.context.stroke();
-  
-    // Add note name and equivalence interval multiple
-  
-    settings.context.save();
-    settings.context.translate(hexCenter.x, hexCenter.y);
-    settings.context.rotate(-settings.rotation);
-    // hexcoords = p and screenCoords = hexCenter
-  
-    //settings.context.fillStyle = "black"; //bdl_04062016
-    //settings.context.fillStyle = getContrastYIQ(current_text_color); Original
-    settings.context.fillStyle = "white";
-    settings.context.font = "22pt Arial";
-    settings.context.textAlign = "center";
-    settings.context.textBaseline = "middle";
-  
-    var note = p.x * settings.rSteps + p.y * settings.urSteps;
-    var equivSteps = settings["enum"] ? parseInt(settings.equivSteps) : settings.scale.length;
-    var equivMultiple = Math.floor(note / equivSteps);
-    var reducedNote = note % equivSteps;
-    if (reducedNote < 0) {
-      reducedNote = equivSteps + reducedNote;
-    }
-  
-    g_midiNoteIndex = reducedNote;
-    g_equivMultiple = equivMultiple;
-    
-    if (!settings.no_labels) {
-      var name = settings["enum"] ? "" + reducedNote : settings.names[reducedNote];
-      if (name) {
-        settings.context.save();
-        var scaleFactor = name.length > 3 ? 3 / name.length : 1;
-        scaleFactor *= settings.hexSize / 50;
-        settings.context.scale(scaleFactor, scaleFactor);
-        settings.context.fillText(name, 0, 0);
-        settings.context.restore();
-      }
-  
-      var scaleFactor = settings.hexSize / 50;
-      settings.context.scale(scaleFactor, scaleFactor);
-      settings.context.translate(10, -25);
-      settings.context.fillStyle = "white";
-      settings.context.font = "12pt Arial";
-      settings.context.textAlign = "center";
-      settings.context.textBaseline = "middle";
-      settings.context.fillText(equivMultiple, 0, 0);
-    }
-  
-    settings.context.restore();
-}
-
-
-var drawCircule = function (p, c) { /* Point, color */
-    //console.log('drawMaster()'); 
-    var hexCenter = hexCoordsToScreen(p);
-  
-    // Calculate hex vertices
-  
-    var x = [];
-    var y = [];
-
-    for (var i = 0; i < 6; i++) {
-      var angle = 2 * Math.PI / 6 * (i + 0.5);
-      x[i] = hexCenter.x + settings.hexSize * Math.cos(angle);
-      y[i] = hexCenter.y + settings.hexSize * Math.sin(angle);
-    }
-    // Draw filled hex
-  
-    settings.context.beginPath();
     /*
     settings.context.moveTo(x[0], y[0]);
     for (var i = 1; i < 6; i++) {
@@ -892,17 +757,17 @@ var drawCircule = function (p, c) { /* Point, color */
   
     // Calculate hex vertices outside clipped path
   
-    //var x2 = [];
-    //var y2 = [];
-    //for (var i = 0; i < 6; i++) {
-      //var angle = 2 * Math.PI / 6 * (i + 0.5);
-      //x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
-      //y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
-    //}
+    var x2 = [];
+    var y2 = [];
+    for (var i = 0; i < 6; i++) {
+      var angle = 2 * Math.PI / 6 * (i + 0.5);
+      x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
+      y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
+    }
   
     // Draw shadowed stroke outside clip to create pseudo-3d effect
   
-    //settings.context.beginPath();
+    settings.context.beginPath();
     //settings.context.moveTo(x2[0], y2[0]);
     //for (var i = 1; i < 6; i++) {
       //settings.context.lineTo(x2[i], y2[i]);
@@ -916,7 +781,7 @@ var drawCircule = function (p, c) { /* Point, color */
     settings.context.shadowOffsetY = 0;
     settings.context.stroke();
     */
-    //settings.context.restore();
+    settings.context.restore();
   
     // Add a clean stroke around hex
   
@@ -931,7 +796,7 @@ var drawCircule = function (p, c) { /* Point, color */
     settings.context.fill();
     settings.context.lineWidth = 2;
     //settings.context.lineJoin = 'round';
-    settings.context.strokeStyle = '#333333';
+    settings.context.strokeStyle = '#222222';
     settings.context.stroke();
   
     // Add note name and equivalence interval multiple
@@ -982,8 +847,6 @@ var drawCircule = function (p, c) { /* Point, color */
   
     settings.context.restore();
 }
-
-var drawMaster = drawHex;
 
 function centsToColor(cents, pressed) {
     //console.log ('function centsToColor(cents, pressed)');
@@ -1287,7 +1150,7 @@ function onLoadError(e) {
 
 function tempAlert(msg, duration) {
   var el = document.createElement("div");
-  el.setAttribute("style", "position:absolute;top:40%;left:20%;background-color:white; font-size:25px;");
+  el.setAttribute("style", "position:absolute;top:40%;left:20%;background-color:black; font-size:25px;");
   el.innerHTML = msg;
   setTimeout(function() {
     el.parentNode.removeChild(el);
@@ -1551,5 +1414,3 @@ if(init_keyboard_onload)
   
   setTimeout(function(){ goKeyboard(); }, 1500);
 }
-
-
