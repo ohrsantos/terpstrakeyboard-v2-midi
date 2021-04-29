@@ -107,6 +107,7 @@ function hideRevealEnum() {
   }
   changeURL();
 }
+
 function hideRevealCircularKeys() {
     if(document.getElementById("c_keys").checked) 
         drawMaster = drawCircule;
@@ -149,7 +150,8 @@ function changeURL() {
     "&equivSteps=" + document.getElementById("equivSteps").value +
     "&spectrum_colors=" + document.getElementById("spectrum_colors").checked +
     "&fundamental_color=" + document.getElementById("fundamental_color").value +
-    "&no_labels=" + document.getElementById("no_labels").checked;
+    "&no_labels=" + document.getElementById("no_labels").checked +
+    "&c_keys=" + document.getElementById("c_keys").checked;
 
   url += "&scale=";
   url += encodeURIComponent(document.getElementById('scale').value);
@@ -180,7 +182,6 @@ function changeURL() {
 }
 
 var settings = {};
-
 
 function parseScale() {
   settings.scale = [];
@@ -318,11 +319,11 @@ function goKeyboard() {
     settings.hexHeight = settings.hexSize * 2;
     settings.hexVert = settings.hexHeight * 3 / 4;
     settings.hexWidth = Math.sqrt(3) / 2 * settings.hexHeight;
-    //settings.hexWidth = 1 / 2 * settings.hexHeight;
   
     settings.no_labels = document.getElementById('no_labels').checked;
     settings.spectrum_colors = document.getElementById('spectrum_colors').checked;
     settings.fundamental_color = document.getElementById('fundamental_color').value;
+    settings.c_keys = document.getElementById('c_keys').value;
   
     // Set up resize handler
   
@@ -450,7 +451,7 @@ function goKeyboard() {
       var lastShakeCount = 0;
   
       // Shake sensitivity (a lower number is more)
-      var sensitivity = 7; // 5
+      var sensitivity = 9; // 5
   
       // Position variables
       var x1 = 0, y1 = 0, z1 = 0, x2 = 0, y2 = 0, z2 = 0;
@@ -465,7 +466,6 @@ function goKeyboard() {
                                false
       );
   
-        //x1 = y1 = z1 = 0 //Comment this line to turn on systain again;
       // Periodically check the position and fire
       // if the change is greater than the sensitivity
       setInterval(function() {
@@ -543,9 +543,9 @@ function onKeyDown(e) {
     if (e.keyCode == 46) 
         if (WebMidi.enabled) 
             WebMidi.outputs[0].stopNote('all');
-    if (e.keyCode == 96) g_keyNoteOctave = 0;
-    if (e.keyCode == 97) g_keyNoteOctave -= 6;
-    if (e.keyCode == 98) g_keyNoteOctave += 6;
+    if (e.keyCode == 40) g_keyNoteOctave = 0;
+    if (e.keyCode == 37) g_keyNoteOctave -= 6;
+    if (e.keyCode == 39) g_keyNoteOctave += 6;
     console.log(e.keyCode);
     if (e.keyCode == 32) { // Spacebar
         settings.sustain = true;
@@ -714,29 +714,12 @@ var drawHex = function(p, c) { /* Point, color */
   
     var x = [];
     var y = [];
-    //ctx.moveTo (Xcenter +  size * Math.cos(0), Ycenter +  size *  Math.sin(0));
-    //for (var i = 1; i <= numberOfSides;i += 1) {
-      //ctx.lineTo (Xcenter + size * Math.cos(i * 2 * Math.PI / numberOfSides), Ycenter + size * Math.sin(i * 2 * Math.PI / numberOfSides));
-    //}
 
     for (var i = 0; i < 6; i++) {
       var angle = 2 * Math.PI / 6 * (i + 0.5);
       x[i] = hexCenter.x + settings.hexSize * Math.cos(angle);
       y[i] = hexCenter.y + settings.hexSize * Math.sin(angle);
     }
-    /*
-      x[0] = hexCenter.x + settings.hexSize
-      y[0] = hexCenter.y + settings.hexSize * 1.3
-
-      x[1] = hexCenter.x - settings.hexSize
-      y[1] = hexCenter.y + settings.hexSize * 1.3
-
-      x[2] = hexCenter.x - settings.hexSize
-      y[2] = hexCenter.y - settings.hexSize * 1.3
-
-      x[3] = hexCenter.x + settings.hexSize
-      y[3] = hexCenter.y - settings.hexSize * 1.3
-      */
   
     // Draw filled hex
   
@@ -867,65 +850,10 @@ var drawCircule = function (p, c) { /* Point, color */
     // Draw filled hex
   
     settings.context.beginPath();
-    /*
-    settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 6; i++) {
-      settings.context.lineTo(x[i], y[i]);
-    }
-    settings.context.closePath();
-    settings.context.fillStyle = c;
-    */
-    //settings.context.fill();
   
     // Save context and create a hex shaped clip
   
     settings.context.save();
-    /*
-    settings.context.beginPath();
-    settings.context.moveTo(x[0], y[0]);
-    for (var i = 1; i < 4; i++) {
-      settings.context.lineTo(x[i], y[i]);
-    }
-    settings.context.closePath();
-    */
-    //settings.context.clip();
-  
-    // Calculate hex vertices outside clipped path
-  
-    //var x2 = [];
-    //var y2 = [];
-    //for (var i = 0; i < 6; i++) {
-      //var angle = 2 * Math.PI / 6 * (i + 0.5);
-      //x2[i] = hexCenter.x + (parseFloat(settings.hexSize) + 3) * Math.cos(angle);
-      //y2[i] = hexCenter.y + (parseFloat(settings.hexSize) + 3) * Math.sin(angle);
-    //}
-  
-    // Draw shadowed stroke outside clip to create pseudo-3d effect
-  
-    //settings.context.beginPath();
-    //settings.context.moveTo(x2[0], y2[0]);
-    //for (var i = 1; i < 6; i++) {
-      //settings.context.lineTo(x2[i], y2[i]);
-    //}
-    /*settings.context.closePath();
-    settings.context.strokeStyle = 'black';
-    settings.context.lineWidth = 5;
-    settings.context.shadowBlur = 15;
-    settings.context.shadowColor = 'black';
-    settings.context.shadowOffsetX = 0;
-    settings.context.shadowOffsetY = 0;
-    settings.context.stroke();
-    */
-    //settings.context.restore();
-  
-    // Add a clean stroke around hex
-  
-    //settings.context.beginPath();
-    //settings.context.moveTo(x[0], y[0]);
-    //for (var i = 1; i < 6; i++) {
-      //settings.context.lineTo(x[i], y[i]);
-    //}
-    //settings.context.closePath();
     settings.context.arc(hexCenter.x, hexCenter.y, settings.hexSize * .85, 0, 2 * Math.PI);
     settings.context.fillStyle = c;
     settings.context.fill();
